@@ -3,34 +3,57 @@ import sys
 import os
 import argparse
 
+# imports for FTP client and URL parsing files
 from ftp_url import FTPURL
 from ftp_client import FTPCL
 
 def arg_parse():
+    """
+    Parse command line arguments for the FTP client operations.
+    
+    Returns:
+        parsed args: parsed command line arguments.
+    """
     parsed = argparse.ArgumentParser(description="4700 FTP Client")
     parsed.add_argument("operation", 
                         choices=['ls', 'mkdir', 'rm', 'rmdir', 'cp', 'mv'], 
                         help='operations to perform')
+    # handle FTP URL or local file, required for all operations
     parsed.add_argument("arg1", help="first argument")
+    # second argument is optional, used for cp/mv operations
     parsed.add_argument("arg2", nargs='?', help="second argument")
     
     return parsed.parse_args()
 
 def check_ftp(path):
+    """
+    Checks if the given path is an FTP URL.
+    
+    Args:
+        path (str): the path to check
+    
+    Returns:
+        True if the path is an FTP URL, False otherwise
+    """
     return path.startswith('ftp://')
 
 def main():
+    # parse command line arguments
     args = arg_parse()
     oper = args.operation
     ar1 = args.arg1
     ar2 = args.arg2
 
+    # check if the first argument is an FTP URL
     if oper in ('ls','mkdir','rm','rmdir'):
+        # if operations only take one argument, ar2 must be None
         if ar2:
             sys.exit(f"operation {oper} takes only one argument")
+        # creates connection to FTP server
         url = FTPURL(ar1)
         client = FTPCL(url.host, url.port)
         client.user_login(url.user, url.password)
+        # perform operations based on given command
         if oper == 'ls':
             client.lst(url.path)
         elif oper == 'mkdir':
@@ -41,9 +64,12 @@ def main():
             client.rmdir(url.path)
         client.quit()
 
+    # check if the first argument is a local file or FTP URL
     elif oper in ('cp', 'mv'):
+        # for cp/mv operations, ar2 must be provided
         if not ar2:
             sys.exit(f"operation {oper} needs two arguments")
+        # for cp/mv operations, one argument must be a local file and the other an FTP URL
         if check_ftp(ar1) and not check_ftp(ar2):
             url = FTPURL(ar1)
             client = FTPCL(url.host, url.port)
@@ -51,18 +77,24 @@ def main():
             client.download_file(url.path, ar2)
             if oper == 'mv':
                 client.rm(url.path)
+            # close FTP connection
             client.quit()
 
+        # checks if ar1 is a local file and ar2 is an FTP URL
         elif not check_ftp(ar1) and check_ftp(ar2):
+            # check if the local file exists
             if not os.path.isfile(ar1):
                 sys.exit(f"Local file cannot be found: {ar1}")
+            # creates connection to FTP server
             url = FTPURL(ar2)
             client = FTPCL(url.host, url.port)
             client.user_login(url.user, url.password)
             client.upload_file(ar1, url.path)
             if oper == 'mv':
                 os.remove(ar1)
+            # close FTP connection
             client.quit()
+        # both arguments cannot be local files or FTP URLs
         else:
             sys.exit("cp/mv operations must be between a local file and FTP URL")
 
