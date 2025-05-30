@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 
-# import sys
-# import os
-# import socket
-# import argparse
-# import re
 from urllib.parse import urlparse, unquote
 
 class FTPURL:

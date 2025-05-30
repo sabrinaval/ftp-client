@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import os
-# import socket
 import argparse
-# import re
-# from urllib.parse import urlparse, unquote
 
 from ftp_url import FTPURL
 from ftp_client import FTPCL
@@ -34,7 +31,6 @@ def main():
         url = FTPURL(ar1)
         client = FTPCL(url.host, url.port)
         client.user_login(url.user, url.password)
-        # {'client.lst(url.path)' if oper == 'ls' else ''}
         if oper == 'ls':
             client.lst(url.path)
         elif oper == 'mkdir':
@@ -43,9 +39,6 @@ def main():
             client.rm(url.path)
         elif oper == 'rmdir':
             client.rmdir(url.path)
-        # {'client.mkdir(url.path)' if oper == 'mkdir' else ''}
-        # {'client.rm(url.path)' if oper == 'rm' else ''}
-        # {'client.rmdir(url.path)' if oper == 'rmdir' else ''}
         client.quit()
 
     elif oper in ('cp', 'mv'):

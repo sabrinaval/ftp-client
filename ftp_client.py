@@ -1,11 +1,7 @@
 #!/usr/bin/env python3
 
-# import sys
-# import os
 import socket
-# import argparse
 import re
-# from urllib.parse import urlpase, unquote
 
 class FTPCL:
     def __init__(self, host, port):
@@ -68,21 +64,10 @@ class FTPCL:
         self.send_msg(f"PASV\r\n")
         code, msg = self.recv_resp(expect_code={227})
         found_nums = re.findall(r"(\d+)", msg)
-        hd1, hd2, hd3, hd4, pt1, pt2 = map(int, found_nums[:6])
-        data_host = f"{hd1}.{hd2}.{hd3}.{hd4}"
+        pt1, pt2 = map(int, found_nums[-2:])
+        # data_host = f"{hd1}.{hd2}.{hd3}.{hd4}"
         data_port = (pt1 << 8) + pt2
-        
-        for res in socket.getaddrinfo(data_host, data_port, socket.AF_INET, socket.SOCK_STREAM):
-            af, socktype, proto, canonname, sa = res
-            try:
-                s = socket.socket(af, socktype, proto)
-                s.settimeout(5)
-                s.connect(sa)
-                return s
-            except OSError:
-                s.close()
-                continue
-        raise OSError(f"Could not open data connection to {data_host}:{data_port}")
+        return socket.create_connection((self.host, data_port), timeout=5)
     
     def lst(self, path):
         sock = self.pasv()
